@@ -4,7 +4,7 @@ import pieces
 
 
 import sys
-from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem
+from PyQt5.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QLabel, QVBoxLayout, QWidget
 from PyQt5.QtGui import QPixmap
 from PyQt5.QtWidgets import QMessageBox
 
@@ -16,6 +16,9 @@ class Chess(QGraphicsView):
 
         self.scene = QGraphicsScene(self)
         self.setScene(self.scene)
+
+        self.turn_label = QLabel("Turn: White", self)
+        self.turn_label.setGeometry(10, 10, 100, 30)
 
         self.square_size = 60
         self.rows = 8
@@ -45,6 +48,11 @@ class Chess(QGraphicsView):
             self.turn = "black"
         else:
             self.turn = "white"
+
+        self.update_turn_label()
+
+    def update_turn_label(self):
+        self.turn_label.setText(f"Turn: {self.turn.capitalize()}")
 
     def check_turn(self, piece):
         return piece.color == self.turn
@@ -101,7 +109,14 @@ class ChessSquare(QGraphicsPixmapItem):
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     chess = Chess(chessboard)
-    chess.show()
+
+    main_widget = QWidget()
+    layout = QVBoxLayout(main_widget)
+    layout.addWidget(chess)
+    layout.addWidget(chess.turn_label)
+
+    main_widget.show()
+
     sys.exit(app.exec_())
 
 
