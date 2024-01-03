@@ -4,7 +4,7 @@ class Piece(object):
         pass
 
     def getName(self):
-        return self.__class__.__name__[0:2]
+        return self.__class__.__name__
 
     def is_white(self):
         return self.color == "white"
@@ -13,12 +13,13 @@ class Piece(object):
         return self.color == "black"
 
     def is_empty(self):
-        return self.color == "free"
+        return self.color is None
 
 class Empty(Piece):
     def __init__(self, color):
         super().__init__()
         self.color = color
+        
 
 
 class Pawn(Piece):
@@ -33,13 +34,15 @@ class Pawn(Piece):
             if abs(start[1]-to[1]) == 1:
                 # White tries to defeat an enemy with a pawn
                 if to[0]-start[0] == 1:
-                    return Piece.is_black(goal)
+                    return Piece.is_black(goal) or Piece.getName(goal) == "Pseudo_Pawn"
                 else:
                     return False
             elif to[1] == start[1]:
                 # White tries to advance straight with pawn
                 if to[0]-start[0] == 1:
                     return Piece.is_empty(goal)
+                elif start[0] == 1 and to[0]-start[0] == 2:
+                    return (Piece.is_empty(goal) and Piece.is_empty(grid[to[0]-1][to[1]]))
                 else:
                     return False
             else:
@@ -48,25 +51,32 @@ class Pawn(Piece):
             if abs(start[1]-to[1]) == 1:
                 # Black tries to defeat an enemy with a pawn
                 if to[0]-start[0] == -1:
-                    return Piece.is_white(goal)
+                    return Piece.is_white(goal) or Piece.getName(goal) == "Pseudo_Pawn"
                 else:
                     return False
             elif to[1] == start[1]:
                 # Black tries to advance straight with pawn
                 if to[0]-start[0] == -1:
                     return Piece.is_empty(goal)
+                elif start[0] == 6 and to[0]-start[0] == -2:
+                    return (Piece.is_empty(goal) and Piece.is_empty(grid[to[0]+1][to[1]]))
                 else:
                     return False
             else:
                 return False
 
+class Pseudo_Pawn(Piece):
 
+    def __init__(self):
+        super().__init__()
+        self.color = None
 
 class Rook(Piece):
 
     def __init__(self, color):
         super().__init__()
         self.color = color
+        self.moved = False
 
     def is_valid_move(self, grid, start, to):
         goal = grid[to[0]][to[1]]
@@ -79,22 +89,30 @@ class Rook(Piece):
                         return False
 
             if Piece.is_white(self):
-                return not Piece.is_white(goal)
+                if not Piece.is_white(goal):
+                    self.moved = True
+                    return True
             else:
-                return not Piece.is_black(goal)
+                if not Piece.is_black(goal):
+                    self.moved = True
+                    return True
 
         elif start[1] == to[1]:
             # Rook moves forward/backwards
             if abs(to[0]-start[0]) >= 2:
                 # Empty spaces between initial position and goal
-                for i in range(min(start[0], to[0])+1,max(start[0], to[0])):
+                for i in range(min(start[0], to[0])+1, max(start[0], to[0])):
                     if not Piece.is_empty(grid[i][to[1]]):
                         return False
 
             if Piece.is_white(self):
-                return not Piece.is_white(goal)
+                if not Piece.is_white(goal):
+                    self.moved = True
+                    return True
             else:
-                return not Piece.is_black(goal)
+                if not Piece.is_black(goal):
+                    self.moved = True
+                    return True
         else:
             return False
 
@@ -233,6 +251,7 @@ class King(Piece):
     def __init__(self, color):
         super().__init__()
         self.color = color
+        self.moved = False
 
     def is_valid_move(self, grid, start, to):
         goal = grid[to[0]][to[1]]
@@ -240,8 +259,41 @@ class King(Piece):
         # Four cases
         if abs(start[0]-to[0]) <= 1 and abs(start[1]-to[1]) <= 1:
             if Piece.is_white(self):
-                return not Piece.is_white(goal)
+                if not Piece.is_white(goal):
+                    self.moved = True
+                    return True
             else:
-                return not Piece.is_black(goal)
-        else:
+                if not Piece.is_black(goal):
+                    self.moved = True
+                    return True
             return False
+            
+        elif self.moved == False and Piece.is_white(self):
+            # White tries to castle
+            if goal == grid[0][0]:
+                if Piece.is_empty(grid[0][1]) and Piece.is_empty(grid[0][2]) and Piece.is_empty(grid[0][3]) and goal.moved is False:
+                    self.moved = True
+                    return True
+                
+            elif goal == grid[0][7]:
+                if Piece.is_empty(grid[0][5]) and Piece.is_empty(grid[0][6]) and goal.moved is False:
+                    self.moved = True
+                    return True
+                
+            return False
+        
+        elif self.moved == False and Piece.is_black(self):
+            # Black tries to castle
+            if goal == grid[7][0]:
+                if Piece.is_empty(grid[7][1]) and Piece.is_empty(grid[7][2]) and Piece.is_empty(grid[7][3]) and goal.moved is False:
+                    self.moved = True
+                    return True
+        
+            elif goal == grid[7][7]:
+                if Piece.is_empty(grid[7][5]) and Piece.is_empty(grid[7][6]) and goal.moved is False:
+                    self.moved = True
+                    return True
+            
+            return False
+
+            
