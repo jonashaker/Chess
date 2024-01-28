@@ -83,6 +83,9 @@ class Pseudo_Pawn(Piece):
         super().__init__()
         self.color = None
 
+    def get_value(self):
+        return 0
+
 class Rook(Piece):
 
     def __init__(self, color):

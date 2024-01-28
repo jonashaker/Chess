@@ -24,7 +24,7 @@ class GUI(QGraphicsView):
         self.rows = 8
         self.columns = 8     
 
-        self.playing_game = False
+        self.game_started = False
 
         self.init_labels()
         self.hide_labels()
@@ -52,7 +52,6 @@ class GUI(QGraphicsView):
 
     def start_game(self):
         self.chessgame = logic.GameLogic()
-        self.ai = ai.AI("black", self.chessgame)
         self.show_labels()
         self.draw_chessboard()
         self.game_started = True
@@ -94,11 +93,11 @@ class GUI(QGraphicsView):
 
     def game_condition_checker(self):
         """Checks the condition of the game and updates the gui labels."""
-        if self.chessgame.is_in_check():
-                if self.chessgame.is_checkmate():
-                    self.end_game()
-                else:
-                    self.update_check_label(True)
+        if self.chessgame.check:
+            if self.chessgame.check_mate:
+                self.end_game()
+            else:
+                self.update_check_label(True)
         else:
             self.update_check_label(False)
 
@@ -144,9 +143,9 @@ class GUI(QGraphicsView):
                 #self.ai_move()
     
     def ai_move(self):
-        self.ai.update_chessgame(self.chessgame)
-        start, to = self.ai.random_strategy()
-        self.chessgame.make_move(start, to)
+        enemy = ai.Minimax(self.chessgame)
+        move = enemy.choose_best_move()
+        self.chessgame.make_move(move[0], move[1])
         self.draw_chessboard()
         self.update_turn_label()
         self.game_condition_checker()

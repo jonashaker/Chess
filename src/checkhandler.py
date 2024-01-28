@@ -114,7 +114,6 @@ class CheckHandler:
 
         return True
                         
-                    
     def is_checkmate(self, color):
         """Determines if a game is checkmate."""
         if self.can_escape_check(color):

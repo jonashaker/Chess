@@ -2,7 +2,7 @@ import pieces
 import copy
 from checkhandler import CheckHandler
 
-class GameLogic:
+class ChessGame:
 
     def __init__(self):
         self.chessboard = [[pieces.Rook("white"), pieces.Knight("white"), pieces.Bishop("white"), pieces.Queen("white"), pieces.King("white"), pieces.Bishop("white"), pieces.Knight("white"), pieces.Rook("white")],
@@ -14,7 +14,6 @@ class GameLogic:
                     [pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black"), pieces.Pawn("black")],
                     [pieces.Rook("black"), pieces.Knight("black"), pieces.Bishop("black"), pieces.Queen("black"), pieces.King("black"), pieces.Bishop("black"), pieces.Knight("black"), pieces.Rook("black")]]
 
-        
         self.turn = "white"
 
         self.check_mate = False
@@ -74,8 +73,9 @@ class GameLogic:
         else:
             self.turn = "white"
     
-    def check_turn(self, piece):
+    def check_turn(self, pos):
         """Returns True if the piece on a certain position is the turn color."""
+        piece = self.chessboard[pos[0]][pos[1]]
         return piece.color == self.turn
     
     def is_in_check(self):
@@ -91,6 +91,7 @@ class GameLogic:
         else:
             return False
 
+
     def clear_pseudo_pawns(self):
         for col in range(8):
             # Clear all pseudo-pawns from the board to hinder pawns from making a faulty en passant kill.
@@ -101,13 +102,15 @@ class GameLogic:
                 self.chessboard[5][col] = pieces.EmptySquare() 
 
     def update_board(self, start, to):
+
         """Implements regular moves and the three special rules: Castling, pawn promotion and en passant."""
         if abs(to[0]-3.5) == 3.5 and isinstance(self.chessboard[start[0]][start[1]], pieces.Pawn):
             # Promote pawn
             self.promotion(start, to)
             return
         
-        if (isinstance(self.chessboard[start[0]][start[1]], pieces.King) and isinstance(self.chessboard[to[0]][to[1]], pieces.Rook)) or (isinstance(self.chessboard[start[0]][start[1]], pieces.Rook) and isinstance(self.chessboard[to[0]][to[1]], pieces.King)) and self.chessboard[start[0]][start[1]].color == self.chessboard[to[0]][to[1]].color:
+        if (isinstance(self.chessboard[start[0]][start[1]], pieces.King) and isinstance(self.chessboard[to[0]][to[1]], pieces.Rook)) or (isinstance(self.chessboard[start[0]][start[1]], pieces.Rook) and isinstance(self.chessboard[to[0]][to[1]], pieces.King)):
+            
             # Castling
             self.castling(start, to)
     
@@ -128,26 +131,20 @@ class GameLogic:
         self.chessboard[to[0]][to[1]] = self.chessboard[start[0]][start[1]]
         self.chessboard[start[0]][start[1]] = pieces.EmptySquare()
         
-        
+        # Update checkhandler infor about the board
+        self.check_handler.update_board(self.chessboard)
 
     def make_move(self, start, to):
         self.update_board(start, to)
         self.switch_turn()
 
-        self.check_handler = CheckHandler(self.chessboard)
-        if self.check_handler.is_in_check(self.turn):
-            self.check = True 
-            if self.check_handler.is_checkmate(self.turn):
-                self.check_mate = True 
-
     def is_valid_move(self, start, to):
         """Determines if a given move is valid wrt to initial position, target position and turn."""
         piece = self.chessboard[start[0]][start[1]]
-        if not self.check_turn(piece):
+        if piece.color != self.turn:
             return False
         
         if self.chessboard[start[0]][start[1]].is_valid_move(self.chessboard, start, to):
-            
             temp = copy.deepcopy(self.chessboard)
             self.update_board(start, to)
             if self.check_handler.is_in_check(self.turn):
@@ -158,6 +155,5 @@ class GameLogic:
             else:
                 self.chessboard = temp 
                 self.check_handler.chessboard = self.chessboard
-                return True
-                 
+                return True 
         return False
